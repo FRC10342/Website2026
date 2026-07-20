@@ -274,17 +274,75 @@
   .member{
     background:var(--navy-deep); border:1px solid var(--line); border-radius:16px; overflow:hidden;
     transition:transform .3s ease, border-color .3s ease;
+    cursor:pointer;
   }
   .member:hover{ transform:translateY(-5px); border-color:var(--orange);}
+  .member:focus-visible{ outline:2px solid var(--orange); outline-offset:3px;}
   .member .avatar{
     height:150px; display:flex; align-items:center; justify-content:center;
     font-family:'Space Grotesk',sans-serif; font-weight:700; font-size:2rem; color:var(--navy-deep);
+    overflow:hidden;
+  }
+  .member .avatar img{
+    width:100%; height:100%; object-fit:cover; display:block;
   }
   .member .body{ padding:18px 20px 22px;}
-  .member h3{ font-size:1.02rem; margin-bottom:3px;}
+  .member h3{ font-size:1.02rem; margin-bottom:3px; transition:color .25s ease;}
+  .member:hover h3, .member:focus-visible h3{ color:var(--orange);}
   .member .role{ font-family:'IBM Plex Mono',monospace; font-size:0.76rem; color:var(--orange);}
+  .member .view-bio{
+    margin-top:12px; display:inline-flex; align-items:center; gap:5px;
+    font-family:'IBM Plex Mono',monospace; font-size:0.72rem; color:var(--slate);
+    opacity:0.7; transition:opacity .25s ease, color .25s ease;
+  }
+  .member .view-bio span{ display:inline-block; transition:transform .25s ease;}
+  .member:hover .view-bio, .member:focus-visible .view-bio{ opacity:1; color:var(--orange);}
+  .member:hover .view-bio span, .member:focus-visible .view-bio span{ transform:translateX(3px);}
   .member-note{ margin-top:30px; color:var(--slate); font-size:0.88rem; font-style:italic;}
   @media (max-width:900px){ .team-grid{grid-template-columns:repeat(2,1fr);} }
+
+  /* ---------- MEMBER BIO MODAL ---------- */
+  body.modal-open{ overflow:hidden;}
+  .member-modal-overlay{
+    position:fixed; inset:0; z-index:200;
+    display:flex; align-items:center; justify-content:center; padding:24px;
+    background:rgba(8,31,51,0.72); backdrop-filter:blur(10px);
+    opacity:0; visibility:hidden;
+    transition:opacity .35s ease, visibility 0s linear .35s;
+  }
+  .member-modal-overlay.open{
+    opacity:1; visibility:visible;
+    transition:opacity .35s ease, visibility 0s linear 0s;
+  }
+  .member-modal{
+    position:relative; width:100%; max-width:440px; max-height:calc(100vh - 48px); overflow-y:auto;
+    background:linear-gradient(160deg, rgba(90,14,38,0.45), rgba(13,49,79,0.92) 65%), var(--navy);
+    border:1px solid var(--line); border-radius:20px; padding:40px 34px 36px;
+    box-shadow:0 30px 70px rgba(3,12,20,0.5);
+    transform:translateY(26px) scale(0.95); opacity:0;
+    transition:transform .4s cubic-bezier(.22,1.12,.36,1), opacity .3s ease;
+  }
+  .member-modal-overlay.open .member-modal{ transform:translateY(0) scale(1); opacity:1;}
+  .member-modal-close{
+    position:absolute; top:16px; right:16px; width:36px; height:36px; border-radius:50%;
+    display:flex; align-items:center; justify-content:center;
+    background:rgba(246,238,225,0.06); border:1px solid var(--line); color:var(--cream);
+    cursor:pointer; transition:background .2s ease, border-color .2s ease, color .2s ease, transform .3s ease;
+  }
+  .member-modal-close:hover{ background:rgba(240,144,33,0.16); border-color:var(--orange); color:var(--orange); transform:rotate(90deg);}
+  .member-modal-avatar{
+    width:88px; height:88px; border-radius:18px; overflow:hidden; margin-bottom:22px;
+    display:flex; align-items:center; justify-content:center;
+    font-family:'Space Grotesk',sans-serif; font-weight:700; font-size:1.9rem; color:var(--navy-deep);
+  }
+  .member-modal-avatar img{ width:100%; height:100%; object-fit:cover; display:block;}
+  .member-modal h3{ font-size:1.5rem; margin-bottom:6px;}
+  .member-modal .role{
+    font-family:'IBM Plex Mono',monospace; font-size:0.8rem; color:var(--orange);
+    text-transform:uppercase; letter-spacing:0.06em; margin-bottom:18px;
+  }
+  .member-modal .bio{ color:var(--slate); line-height:1.75; font-size:0.98rem; margin:0;}
+  @media (max-width:480px){ .member-modal{ padding:32px 24px 28px; border-radius:16px;} }
 
   /* ---------- SOCIALS / CONTACT ---------- */
   #connect{
@@ -525,9 +583,20 @@
       <p>A small but growing roster of student engineers, coders, and outreach organisers.</p>
     </div>
     <div class="team-grid" id="teamGrid"></div>
-    <p class="member-note">Placeholder roster shown above — swap in your members' names, roles and photos.</p>
   </div>
 </section>
+
+<div class="member-modal-overlay" id="memberModalOverlay" aria-hidden="true">
+  <div class="member-modal" id="memberModal" role="dialog" aria-modal="true" aria-labelledby="memberModalName" tabindex="-1">
+    <button class="member-modal-close" id="memberModalClose" aria-label="Close">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="4" y1="4" x2="20" y2="20"/><line x1="20" y1="4" x2="4" y2="20"/></svg>
+    </button>
+    <div class="member-modal-avatar" id="memberModalAvatar"></div>
+    <h3 id="memberModalName"></h3>
+    <div class="role" id="memberModalRole"></div>
+    <p class="bio" id="memberModalBio"></p>
+  </div>
+</div>
 
 <section id="connect">
   <div class="wrap">
@@ -650,24 +719,109 @@ document.querySelectorAll('.flip-card').forEach(card => {
   card.addEventListener('keydown', e => { if(e.key === 'Enter' || e.key === ' '){ e.preventDefault(); toggle(); } });
 });
 
-// ---- Team roster (placeholder data — swap in real members) ----
+// ---- Team roster ----
+// Add `name` (full name) and `bio` (a sentence or two) to any member below to power the
+// click-to-view bio popup — e.g. { initials:"OH", name:"...", role:"Team Captain", bio:"..." }.
+// Until a member has those, the popup falls back to their initials and a placeholder bio.
 const roster = [
-  { initials:"XX", role:"Team Captain" },
-  { initials:"XX", role:"Lead Mentor" },
-  { initials:"XX", role:"Programming Lead" },
-  { initials:"XX", role:"Build & CAD Lead" },
-  { initials:"XX", role:"Electrical Lead" },
-  { initials:"XX", role:"Outreach Lead" },
-  { initials:"XX", role:"Strategy & Drive Team" },
-  { initials:"XX", role:"Media & Socials" },
+  { initials:"Orion H", role:"Team Captain", image:"Webste2026/OH.jpg", bio:"AKA 'onion'. THE team leader, also does electrical..."},
+  { initials:"Andrew W", role:"Lead Mentor", bio: "AKA 'Our goat'. Needs coffee..."},
+  { initials:"Tom B", role:"Build & CAD Lead", bio: "AKA 'baby bowers'. CAD master by day, crashout by night."},
+  { initials:"Declan C", role:"Programming Lead", bio:"AKA 'Decy Chan'. Only working coder remaining."},
+  { initials:"Angus O", role:"Electrical Lead", bio:"AKA 'AnUs' Broke a motor (working on his lefts and rights)." },
+  { initials:"Tom H", role:"CAD Leader", bio:"AKA 'The Board'. Works two teams... idk why." },
+  { initials:"James A", role:"Outreach Lead", bio:"AKA 'Jackers'. Never to be seen..." },
+  { initials:"Fletcher H", role:"Fabrication Lead", bio:"AKA 'fleckers'. Cutist patotiee." },
+  { initials:"Elliot F", role:"Electrical & Drive Team", bio:"AKA 'Pred'. Has had too many Redbulls. " },
+  { initials:"Nerenchia A", role:"Media & Socials", bio: "AKA 'Miss Adams'. THE photographer." },
+  { initials:"Ben R", role:"Media & Socials", bio:"AKA 'Boixy'. I coded this page yo. "},
+  { initials:"Issac Y", role:"Programming Grunt", bio:"AKA 'Idiot'. Is just there."},
+  { initials:"Lincoln P", role:"Build & CAD", bio:"AKA 'Ponc'. Might be obsessed with frc. Might not be mentally stable." },
+  { initials:"Hugo S", role:"Outreach", bio:"AKA 'Huugo'. As per the whole outreach team has not been seen in decades." },
+  { initials:"Lachie C", role:"Outreach", bio:"AKA 'The other Lachie'. Carries outreach tbh." },
+  { initials:"Eli R", role:"Outreach", bio:"AKA 'Average Eli'. Litteraly never seen." },
+  { initials:"Anderson R", role:"Fabrication", bio:"AKA 'Goblin'. Has insane holiday project." },
+  { initials:"Oban H", role:"Fabrication", bio:"AKA 'Missing'. Too busy working in the IB."},
+  { initials:"Lucas K", role:"Fabrication", bio:"AKA 'Saviour of the white Australian race'. Dont ask why thats his name." },
+  { initials:"Gerogre O", role:"Fabrication", bio:"AKA 'Goggy'. Just here to help." },
+  { initials:"Lachie G", role:"Fabrication", bio:"AKA 'lil gillet on a flippin skillet'. Might be LeBron idk."},
+  { initials:"Osacr H", role:"Electrical", bio:"AKA 'Herb'. Happy to be here." }
 ];
-const palette = ["#F09021","#5A0E26","#0D314F"];
+const palette = ["#F00000","#5A0E26","#0D314F"];
 const grid = document.getElementById('teamGrid');
+
+// ---- Member bio modal ----
+const memberModalOverlay = document.getElementById('memberModalOverlay');
+const memberModal = document.getElementById('memberModal');
+const memberModalClose = document.getElementById('memberModalClose');
+const memberModalAvatar = document.getElementById('memberModalAvatar');
+const memberModalName = document.getElementById('memberModalName');
+const memberModalRole = document.getElementById('memberModalRole');
+const memberModalBio = document.getElementById('memberModalBio');
+let lastFocusedMember = null;
+
+function openMemberModal(member, bg){
+  const displayName = member.name || member.initials;
+  memberModalAvatar.style.background = bg;
+  memberModalAvatar.innerHTML = member.image
+    ? `<img src="${member.image}" alt="${displayName}" onerror="this.parentElement.textContent='${member.initials}'">`
+    : member.initials;
+  memberModalName.textContent = displayName;
+  memberModalRole.textContent = member.role;
+  memberModalBio.textContent = member.bio || "Bio coming soon — check back for an update on this team member.";
+
+  lastFocusedMember = document.activeElement;
+  memberModalOverlay.classList.add('open');
+  memberModalOverlay.setAttribute('aria-hidden', 'false');
+  document.body.classList.add('modal-open');
+  document.addEventListener('keydown', onMemberModalKeydown);
+  memberModal.focus();
+}
+
+function closeMemberModal(){
+  memberModalOverlay.classList.remove('open');
+  memberModalOverlay.setAttribute('aria-hidden', 'true');
+  document.body.classList.remove('modal-open');
+  document.removeEventListener('keydown', onMemberModalKeydown);
+  if(lastFocusedMember) lastFocusedMember.focus();
+}
+
+function onMemberModalKeydown(e){
+  if(e.key === 'Escape'){ closeMemberModal(); return; }
+  if(e.key === 'Tab'){
+    const focusable = Array.from(memberModal.querySelectorAll('button, [href], [tabindex]:not([tabindex="-1"])'));
+    if(!focusable.length) return;
+    const first = focusable[0];
+    const last = focusable[focusable.length - 1];
+    const activeIsInside = focusable.includes(document.activeElement);
+    if(e.shiftKey && (document.activeElement === first || !activeIsInside)){ e.preventDefault(); last.focus(); }
+    else if(!e.shiftKey && (document.activeElement === last || !activeIsInside)){ e.preventDefault(); first.focus(); }
+  }
+}
+
+memberModalOverlay.addEventListener('click', (e) => { if(e.target === memberModalOverlay) closeMemberModal(); });
+memberModalClose.addEventListener('click', closeMemberModal);
+
 roster.forEach((m, i) => {
   const card = document.createElement('div');
   card.className = 'member reveal';
-  card.innerHTML = `<div class="avatar" style="background:${palette[i % palette.length]}">${m.initials}</div>
-    <div class="body"><h3>Team Member</h3><div class="role">${m.role}</div></div>`;
+  card.tabIndex = 0;
+  card.setAttribute('role', 'button');
+  const bg = palette[i % palette.length];
+  const displayName = m.name || m.initials;
+  card.setAttribute('aria-label', `View bio for ${displayName}`);
+  const avatarInner = m.image
+    ? `<img src="${m.image}" alt="${displayName}" onerror="this.parentElement.textContent='${m.initials}'">`
+    : m.initials;
+  card.innerHTML = `<div class="avatar" style="background:${bg}">${avatarInner}</div>
+    <div class="body">
+      <h3>${displayName}</h3>
+      <div class="role">${m.role}</div>
+      <div class="view-bio">View Bio <span aria-hidden="true">→</span></div>
+    </div>`;
+  const openThisMember = () => openMemberModal(m, bg);
+  card.addEventListener('click', openThisMember);
+  card.addEventListener('keydown', e => { if(e.key === 'Enter' || e.key === ' '){ e.preventDefault(); openThisMember(); } });
   grid.appendChild(card);
   io.observe(card);
 });
