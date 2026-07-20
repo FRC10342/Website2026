@@ -1,0 +1,13 @@
+{
+  "name": "frc10342-website",
+  "version": "1.0.0",
+  "description": "Lost In Translation - FRC Team 10342 Website",
+  "type": "module",
+  "scripts": {
+    "build": "node build-insights.js"
+  },
+  "dependencies": {
+    "@vercel/speed-insights": "^1.1.0"
+  },
+  "devDependencies": {}
+}
